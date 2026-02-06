@@ -74,7 +74,7 @@ namespace EmpireOfGlass.Data
                 BattlePassPremium = false,
                 VIPLevel = 0,
                 VIPExpiryTimestamp = 0,
-                BaseLayout = new int[10][],
+                BaseLayout = CreateEmptyBaseLayout(10, 10),
                 Inventory = new List<InventoryItem>(),
                 LastOfflineTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 OfflineAccumulatedGold = 0f
@@ -95,6 +95,19 @@ namespace EmpireOfGlass.Data
         public static PlayerData FromJson(string json)
         {
             return JsonUtility.FromJson<PlayerData>(json);
+        }
+
+        /// <summary>
+        /// Creates an empty base layout grid with proper initialization.
+        /// </summary>
+        private static int[][] CreateEmptyBaseLayout(int width, int height)
+        {
+            var layout = new int[width][];
+            for (int i = 0; i < width; i++)
+            {
+                layout[i] = new int[height];
+            }
+            return layout;
         }
 
         /// <summary>

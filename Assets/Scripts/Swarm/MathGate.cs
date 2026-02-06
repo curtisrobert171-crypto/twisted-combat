@@ -25,6 +25,7 @@ namespace EmpireOfGlass.Swarm
         [SerializeField] private string displayText;
 
         private bool activated;
+        private SwarmController cachedSwarm;
 
         public GateOperation Operation => operation;
         public int Value => value;
@@ -46,6 +47,11 @@ namespace EmpireOfGlass.Swarm
             }
         }
 
+        private void Start()
+        {
+            cachedSwarm = FindAnyObjectByType<SwarmController>();
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             if (activated) return;
@@ -53,10 +59,9 @@ namespace EmpireOfGlass.Swarm
             if (other.GetComponentInParent<Core.HeroController>() != null)
             {
                 activated = true;
-                var swarm = FindAnyObjectByType<SwarmController>();
-                if (swarm != null)
+                if (cachedSwarm != null)
                 {
-                    swarm.ApplyMathGate(operation, value);
+                    cachedSwarm.ApplyMathGate(operation, value);
                 }
                 PlayRefractionVFX();
             }

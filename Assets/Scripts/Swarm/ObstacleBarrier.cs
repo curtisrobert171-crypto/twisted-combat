@@ -22,11 +22,17 @@ namespace EmpireOfGlass.Swarm
         [SerializeField] private bool destroyOnImpact = true;
 
         private bool activated;
+        private SwarmController cachedSwarm;
 
         private void Awake()
         {
             var collider = GetComponent<BoxCollider>();
             collider.isTrigger = true;
+        }
+
+        private void Start()
+        {
+            cachedSwarm = FindAnyObjectByType<SwarmController>();
         }
 
         private void OnTriggerEnter(Collider other)
@@ -36,10 +42,9 @@ namespace EmpireOfGlass.Swarm
             if (other.GetComponentInParent<Core.HeroController>() != null)
             {
                 activated = true;
-                var swarm = FindAnyObjectByType<SwarmController>();
-                if (swarm != null)
+                if (cachedSwarm != null)
                 {
-                    swarm.ApplyMathGate(MathGate.GateOperation.Subtract, damageToSwarm);
+                    cachedSwarm.ApplyMathGate(MathGate.GateOperation.Subtract, damageToSwarm);
                 }
 
                 Debug.Log($"[ObstacleBarrier] {obstacleType} hit! -{damageToSwarm} shardlings");
