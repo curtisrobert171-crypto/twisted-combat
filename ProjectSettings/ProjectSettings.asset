@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  productName: Empire of Glass
+  companyName: TwistedCombat
+  defaultScreenWidth: 1080
+  defaultScreenHeight: 1920
+  targetDevice: 2
+  useOnDemandResources: 0
+  accelerometerFrequency: 60
+  muteOtherAudioSources: 0
+  defaultInterfaceOrientation: 1
+  allowedAutorotateToPortrait: 1
+  allowedAutorotateToPortraitUpsideDown: 0
+  allowedAutorotateToLandscapeRight: 0
+  allowedAutorotateToLandscapeLeft: 0
+  useAnimatedAutorotation: 1
+  defaultIsNativeResolution: 1
+  runInBackground: 1
+  graphicsJobs: 0
+  colorSpace: 1
+  bundleVersion: 0.1.0
+  applicationIdentifier:
+    Android: com.twistedcombat.empireofglass
+    iPhone: com.twistedcombat.empireofglass
+  AndroidMinSdkVersion: 26
+  AndroidTargetSdkVersion: 34
+  iPhoneTargetOSVersionString: 15.0
+  stripEngineCode: 1
+  scriptingBackend:
+    Android: 1
+    iPhone: 1
+  apiCompatibilityLevelPerPlatform:
+    Android: 3
+    iPhone: 3
