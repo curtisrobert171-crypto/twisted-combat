@@ -21,6 +21,7 @@ namespace EmpireOfGlass.City
 
         private BuildingState[,] cityGrid;
         private readonly List<CityBuilding> buildings = new List<CityBuilding>();
+        private readonly Dictionary<(int, int), CityBuilding> buildingLookup = new Dictionary<(int, int), CityBuilding>();
 
         public int TotalBuildings => buildings.Count;
 
@@ -56,6 +57,7 @@ namespace EmpireOfGlass.City
             };
 
             buildings.Add(building);
+            buildingLookup[(gridX, gridY)] = building;
             OnBuildingPlaced?.Invoke(building);
 
             Debug.Log($"[CityBuilder] Building placed: {type} at ({gridX}, {gridY})");
@@ -72,8 +74,7 @@ namespace EmpireOfGlass.City
 
             cityGrid[gridX, gridY] = BuildingState.Completed;
 
-            var building = buildings.Find(b => b.GridX == gridX && b.GridY == gridY);
-            if (building != null)
+            if (buildingLookup.TryGetValue((gridX, gridY), out var building))
             {
                 building.State = BuildingState.Completed;
                 OnBuildingUpgraded?.Invoke(building);
@@ -93,8 +94,7 @@ namespace EmpireOfGlass.City
 
             cityGrid[gridX, gridY] = BuildingState.Ruin;
 
-            var building = buildings.Find(b => b.GridX == gridX && b.GridY == gridY);
-            if (building != null)
+            if (buildingLookup.TryGetValue((gridX, gridY), out var building))
             {
                 building.State = BuildingState.Ruin;
             }

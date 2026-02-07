@@ -26,6 +26,9 @@ namespace EmpireOfGlass.UI
         [SerializeField] private UnityEngine.UI.Text gemsText;
 
         private GameObject activePanel;
+        private int lastSwarmCount = -1;
+        private int lastGold = -1;
+        private int lastGems = -1;
 
         private void Awake()
         {
@@ -82,22 +85,33 @@ namespace EmpireOfGlass.UI
 
         /// <summary>
         /// Update the swarm counter display during gameplay.
+        /// Only updates the text when the value has changed to avoid ToString() allocations.
         /// </summary>
         public void UpdateSwarmCount(int count)
         {
-            if (swarmCountText != null)
+            if (swarmCountText != null && count != lastSwarmCount)
             {
+                lastSwarmCount = count;
                 swarmCountText.text = count.ToString();
             }
         }
 
         /// <summary>
         /// Update currency displays.
+        /// Only updates the text when values have changed to avoid ToString() allocations.
         /// </summary>
         public void UpdateCurrencyDisplay(int gold, int gems)
         {
-            if (goldText != null) goldText.text = gold.ToString();
-            if (gemsText != null) gemsText.text = gems.ToString();
+            if (goldText != null && gold != lastGold)
+            {
+                lastGold = gold;
+                goldText.text = gold.ToString();
+            }
+            if (gemsText != null && gems != lastGems)
+            {
+                lastGems = gems;
+                gemsText.text = gems.ToString();
+            }
         }
 
         /// <summary>
