@@ -23,6 +23,7 @@ namespace EmpireOfGlass.Swarm
         [SerializeField] private float alignmentWeight = 1.0f;
 
         private readonly List<ShardlingBehavior> activeShardlings = new List<ShardlingBehavior>();
+        private readonly List<ShardlingBehavior> neighborBuffer = new List<ShardlingBehavior>();
         private Transform heroTransform;
 
         public int ShardlingCount => activeShardlings.Count;
@@ -158,10 +159,12 @@ namespace EmpireOfGlass.Swarm
 
         /// <summary>
         /// Returns neighboring shardlings for flocking calculations.
+        /// Uses a shared buffer to avoid per-call List allocations.
+        /// Callers must not cache the returned list as it is reused.
         /// </summary>
         public List<ShardlingBehavior> GetNeighbors(Vector3 position, float radius)
         {
-            var neighbors = new List<ShardlingBehavior>();
+            neighborBuffer.Clear();
             float sqrRadius = radius * radius;
 
             foreach (var shardling in activeShardlings)
@@ -169,10 +172,10 @@ namespace EmpireOfGlass.Swarm
                 if (shardling == null) continue;
                 if ((shardling.transform.position - position).sqrMagnitude <= sqrRadius)
                 {
-                    neighbors.Add(shardling);
+                    neighborBuffer.Add(shardling);
                 }
             }
-            return neighbors;
+            return neighborBuffer;
         }
     }
 }

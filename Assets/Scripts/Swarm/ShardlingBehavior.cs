@@ -48,11 +48,7 @@ namespace EmpireOfGlass.Swarm
             List<ShardlingBehavior> neighbors = swarmController.GetNeighbors(transform.position, neighborRadius);
             if (neighbors.Count == 0) return;
 
-            Vector3 separation = CalculateSeparation(neighbors) * separationWeight;
-            Vector3 cohesion = CalculateCohesion(neighbors) * cohesionWeight;
-            Vector3 alignment = CalculateAlignment(neighbors) * alignmentWeight;
-
-            Vector3 flockingForce = separation + cohesion + alignment;
+            Vector3 flockingForce = CalculateFlocking(neighbors);
             rb.AddForce(flockingForce * moveSpeed, ForceMode.Acceleration);
 
             if (rb.linearVelocity.magnitude > maxSpeed)
@@ -73,53 +69,54 @@ namespace EmpireOfGlass.Swarm
             Destroy(gameObject, 0.3f);
         }
 
-        private Vector3 CalculateSeparation(List<ShardlingBehavior> neighbors)
+        /// <summary>
+        /// Computes separation, cohesion, and alignment in a single pass over neighbors.
+        /// </summary>
+        private Vector3 CalculateFlocking(List<ShardlingBehavior> neighbors)
         {
-            Vector3 force = Vector3.zero;
+            Vector3 separationForce = Vector3.zero;
+            Vector3 cohesionCenter = Vector3.zero;
+            Vector3 avgVelocity = Vector3.zero;
+            int count = 0;
+            int velocityCount = 0;
+
             foreach (var neighbor in neighbors)
             {
                 if (neighbor == this) continue;
+
                 Vector3 diff = transform.position - neighbor.transform.position;
                 float dist = diff.magnitude;
                 if (dist > 0)
                 {
-                    force += diff.normalized / dist;
+                    separationForce += diff.normalized / dist;
                 }
-            }
-            return force;
-        }
 
-        private Vector3 CalculateCohesion(List<ShardlingBehavior> neighbors)
-        {
-            Vector3 center = Vector3.zero;
-            int count = 0;
-            foreach (var neighbor in neighbors)
-            {
-                if (neighbor == this) continue;
-                center += neighbor.transform.position;
-                count++;
-            }
-            if (count == 0) return Vector3.zero;
-            center /= count;
-            return (center - transform.position).normalized;
-        }
+                cohesionCenter += neighbor.transform.position;
 
-        private Vector3 CalculateAlignment(List<ShardlingBehavior> neighbors)
-        {
-            Vector3 avgVelocity = Vector3.zero;
-            int count = 0;
-            foreach (var neighbor in neighbors)
-            {
-                if (neighbor == this) continue;
                 if (neighbor.rb != null)
                 {
                     avgVelocity += neighbor.rb.linearVelocity;
-                    count++;
+                    velocityCount++;
                 }
+
+                count++;
             }
+
             if (count == 0) return Vector3.zero;
-            avgVelocity /= count;
-            return avgVelocity.normalized;
+
+            cohesionCenter /= count;
+            Vector3 cohesionForce = (cohesionCenter - transform.position).normalized;
+
+            Vector3 alignmentForce = Vector3.zero;
+            if (velocityCount > 0)
+            {
+                avgVelocity /= velocityCount;
+                alignmentForce = avgVelocity.normalized;
+            }
+
+            return separationForce * separationWeight
+                 + cohesionForce * cohesionWeight
+                 + alignmentForce * alignmentWeight;
         }
     }
 }
