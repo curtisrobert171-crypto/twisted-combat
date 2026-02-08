@@ -94,7 +94,8 @@ namespace EmpireOfGlass.AntiCheat
         public string GenerateValidationPayload(string actionType, string data)
         {
             long timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            string payload = $"{{\"action\":\"{actionType}\",\"data\":{data},\"ts\":{timestamp}}}";
+            string safeAction = JsonUtility.ToJson(actionType).Trim('"');
+            string payload = $"{{\"action\":\"{safeAction}\",\"data\":{data},\"ts\":{timestamp}}}";
 
             Debug.Log($"[AntiCheatManager] Validation payload generated for: {actionType}");
             return payload;

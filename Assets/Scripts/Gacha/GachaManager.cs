@@ -16,10 +16,11 @@ namespace EmpireOfGlass.Gacha
         [SerializeField] private int tenPullCostGems = 900;
         [SerializeField] private int pityThreshold = 90;
 
-        [Header("Drop Rates")]
-        [SerializeField] private float fiveStarRate = 0.006f;
-        [SerializeField] private float fourStarRate = 0.051f;
-        [SerializeField] private float threeStarRate = 0.43f;
+        [Header("Drop Rates (remaining probability → 2★)")]
+        [SerializeField] private float fiveStarRate = 0.006f;  // 0.6%
+        [SerializeField] private float fourStarRate = 0.051f;  // 5.1%
+        [SerializeField] private float threeStarRate = 0.43f;  // 43.0%
+        // Implicit 2★ rate: 51.3%
 
         private int pullsSinceLastFiveStar;
 

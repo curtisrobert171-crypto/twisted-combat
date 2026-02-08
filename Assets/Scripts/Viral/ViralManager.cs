@@ -104,9 +104,12 @@ namespace EmpireOfGlass.Viral
 
             if (url.Contains("invite?ref="))
             {
-                int refIndex = url.IndexOf("ref=") + 4;
-                string referrerId = url.Substring(refIndex);
-                Debug.Log($"[ViralManager] Processing invite from referrer: {referrerId}");
+                int refIndex = url.IndexOf("ref=");
+                if (refIndex >= 0 && refIndex + 4 < url.Length)
+                {
+                    string referrerId = url.Substring(refIndex + 4);
+                    Debug.Log($"[ViralManager] Processing invite from referrer: {referrerId}");
+                }
             }
         }
     }
