@@ -1,0 +1,25 @@
+{
+  "name": "com.empireofglass.tests.playmode",
+  "displayName": "Empire of Glass Play Mode Tests",
+  "version": "1.0.0",
+  "description": "Play mode integration tests for Empire of Glass",
+  "unity": "2021.3",
+  "dependencies": {},
+  "references": [
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner",
+    "EmpireOfGlass.Core",
+    "EmpireOfGlass.Swarm"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
