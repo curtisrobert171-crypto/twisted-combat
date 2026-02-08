@@ -56,6 +56,12 @@ namespace EmpireOfGlass.Monetization
         [SerializeField] private float shieldDurationHours = 8f;
         [SerializeField] private float shieldRechargeCooldownHours = 4f;
 
+        [Header("Viral Loop (Var 43)")]
+        [SerializeField] private string gameBaseUrl = "https://empireofglass.game";
+
+        private const long SecondsPerDay = 86400;
+        private const long SecondsPerMonth = 30L * SecondsPerDay;
+
         private float merchantTimer;
         private bool merchantActive;
         private readonly List<string> socialProofFeed = new List<string>();
@@ -97,6 +103,11 @@ namespace EmpireOfGlass.Monetization
             }
 
             CheckTrialHeroExpiry();
+        }
+
+        private static string GetDisplayName(Data.PlayerData player)
+        {
+            return string.IsNullOrEmpty(player?.DisplayName) ? "A player" : player.DisplayName;
         }
 
         // ==================== Var 23: Anchoring Offer ====================
@@ -235,8 +246,7 @@ namespace EmpireOfGlass.Monetization
                 rarity = Random.Range(4, 6); // 4-5 star
                 player.GachaPity = 0;
                 player.TotalRarePulls++;
-                string name = string.IsNullOrEmpty(player.DisplayName) ? "A player" : player.DisplayName;
-                AddSocialProofEntry($"{name} pulled a {rarity}-star hero shard!");
+                AddSocialProofEntry($"{GetDisplayName(player)} pulled a {rarity}-star hero shard!");
             }
             else
             {
@@ -302,7 +312,7 @@ namespace EmpireOfGlass.Monetization
 
             level = Mathf.Clamp(level, 1, vipMaxLevel);
             player.VIPLevel = level;
-            player.VIPExpiryTimestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() + (30L * 24 * 3600); // 30 days
+            player.VIPExpiryTimestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() + SecondsPerMonth;
 
             Debug.Log($"[MonetizationManager] VIP level {level} activated (${vipMonthlyPrice}/mo), expires in 30 days");
             OnVIPActivated?.Invoke();
@@ -393,14 +403,13 @@ namespace EmpireOfGlass.Monetization
 
             long now = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             long secondsSinceLastGift = now - player.LastDailyGiftTimestamp;
-            long oneDaySeconds = 24 * 3600;
 
-            // Reset streak if more than 48 hours since last claim
-            if (secondsSinceLastGift > oneDaySeconds * 2)
+            // Reset streak if more than 48 hours since last claim (grace period)
+            if (secondsSinceLastGift > SecondsPerDay * 2)
                 player.DailyGiftStreak = 0;
 
             // Only allow one claim per 24-hour period
-            if (secondsSinceLastGift < oneDaySeconds)
+            if (secondsSinceLastGift < SecondsPerDay)
             {
                 Debug.Log("[MonetizationManager] Daily gift already claimed today");
                 return 0;
@@ -427,8 +436,7 @@ namespace EmpireOfGlass.Monetization
             if (player == null || player.Gold < giftAmount) return 0;
 
             player.Gold -= giftAmount;
-            string name = string.IsNullOrEmpty(player.DisplayName) ? "A player" : player.DisplayName;
-            AddSocialProofEntry($"{name} sent a gift of {giftAmount} gold!");
+            AddSocialProofEntry($"{GetDisplayName(player)} sent a gift of {giftAmount} gold!");
 
             Debug.Log($"[MonetizationManager] Alliance gift sent: {giftAmount} gold");
             return giftAmount;
@@ -492,6 +500,110 @@ namespace EmpireOfGlass.Monetization
             if (player == null) return false;
             return System.DateTimeOffset.UtcNow.ToUnixTimeSeconds() < player.ShieldExpiryTimestamp;
         }
+
+        // ==================== Var 42: Ad Mediation ====================
+
+        /// <summary>
+        /// Request a rewarded video ad for an emergency shield (Var 42).
+        /// In production, this integrates with AdMob/IronSource SDK.
+        /// Returns true if the ad request was initiated.
+        /// </summary>
+        public bool RequestRewardedAdForShield()
+        {
+            var player = Data.SaveManager.Instance?.CurrentPlayer;
+            if (player == null) return false;
+
+            // In production: call ad SDK (e.g., AdMob.ShowRewardedAd)
+            Debug.Log("[MonetizationManager] Rewarded ad requested: emergency shield");
+            return true;
+        }
+
+        /// <summary>
+        /// Called when a rewarded ad completes — grant the emergency shield (Var 42).
+        /// </summary>
+        public void OnRewardedAdCompleted(string adPlacement)
+        {
+            var player = Data.SaveManager.Instance?.CurrentPlayer;
+            if (player == null) return;
+
+            switch (adPlacement)
+            {
+                case "emergency_shield":
+                    player.ShieldCount = Mathf.Min(player.ShieldCount + 1, maxShields);
+                    Debug.Log($"[MonetizationManager] Rewarded ad complete: +1 shield ({player.ShieldCount}/{maxShields})");
+                    OnShieldReplenished?.Invoke(player.ShieldCount);
+                    break;
+                case "revive":
+                    Debug.Log("[MonetizationManager] Rewarded ad complete: revive granted");
+                    OnAdReviveGranted?.Invoke();
+                    break;
+                default:
+                    Debug.Log($"[MonetizationManager] Rewarded ad complete: {adPlacement}");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Request a rewarded video ad for revive (Var 24 + Var 42).
+        /// Alternative to the $0.99 IAP revive.
+        /// </summary>
+        public bool RequestRewardedAdForRevive()
+        {
+            Debug.Log("[MonetizationManager] Rewarded ad requested: revive");
+            return true;
+        }
+
+        public event System.Action OnAdReviveGranted;
+
+        // ==================== Var 43: Viral Loop ====================
+
+        /// <summary>
+        /// Generate a deep-link invite URL for a friend (Var 43).
+        /// Grants referral bonus to both players upon signup.
+        /// </summary>
+        public string GenerateInviteLink()
+        {
+            var player = Data.SaveManager.Instance?.CurrentPlayer;
+            if (player == null) return "";
+
+            string link = $"{gameBaseUrl}/invite?ref={player.UserID}";
+            Debug.Log($"[MonetizationManager] Invite link generated: {link}");
+            return link;
+        }
+
+        /// <summary>
+        /// Place a bounty on a rival — text a friend to attack them (Var 43).
+        /// Returns a shareable bounty link.
+        /// </summary>
+        public string PlaceBountyOnRival(string rivalUserID, int bountyGold)
+        {
+            var player = Data.SaveManager.Instance?.CurrentPlayer;
+            if (player == null || player.Gold < bountyGold) return "";
+
+            player.Gold -= bountyGold;
+            string bountyLink = $"{gameBaseUrl}/bounty?target={rivalUserID}&from={player.UserID}&gold={bountyGold}";
+
+            AddSocialProofEntry($"{GetDisplayName(player)} placed a {bountyGold} gold bounty!");
+
+            Debug.Log($"[MonetizationManager] Bounty placed: {bountyGold} gold on {rivalUserID}");
+            OnBountyPlaced?.Invoke(rivalUserID, bountyGold);
+            return bountyLink;
+        }
+
+        /// <summary>
+        /// Process a referral when an invited friend signs up (Var 43).
+        /// Grants bonus to the referring player.
+        /// </summary>
+        public void ProcessReferralBonus(int bonusGems)
+        {
+            var player = Data.SaveManager.Instance?.CurrentPlayer;
+            if (player == null) return;
+
+            player.PremiumGems += bonusGems;
+            Debug.Log($"[MonetizationManager] Referral bonus: +{bonusGems} gems");
+        }
+
+        public event System.Action<string, int> OnBountyPlaced;
 
         // ==================== Utility ====================
 
