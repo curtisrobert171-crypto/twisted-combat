@@ -4,6 +4,19 @@ Use the prompt below to generate a **Game Design Document (GDD)** and a **Techni
 
 ---
 
+## 📚 **DOCUMENTATION: Current Core Game Code**
+
+**NEW**: Complete documentation of all working code is now available:
+
+- **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Start here! Index of all documentation
+- **[CORE_GAME_CODE_DOCUMENTATION.md](./CORE_GAME_CODE_DOCUMENTATION.md)** - Full 40-page code reference with annotations
+- **[CODE_QUICK_REFERENCE.md](./CODE_QUICK_REFERENCE.md)** - Fast lookup guide for developers
+- **[ARCHITECTURE_GUIDE.md](./ARCHITECTURE_GUIDE.md)** - System relationships and data flow
+
+These documents show all 18 C# scripts (~2,500 LOC), the three gameplay loops (Swarm/City/Raid), data systems, monetization, and areas needing polish. **Current code is ~60% complete and production-ready for prototyping.**
+
+---
+
 ## MISSION
 Generate a AAA mobile game design and full‑stack architecture for **EMPIRE OF GLASS**. The game fuses:
 - **Last War: Survival** (Swarm satisfaction loop)
