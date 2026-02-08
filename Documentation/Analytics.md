@@ -57,7 +57,7 @@ Analytics.ReviveDeclined()
 ```csharp
 // Performance metrics
 Analytics.FrameRateSnapshot(avgFPS, minFPS, swarmCount)
-Analytics.LoadTime(sceneN ame, duration)
+Analytics.LoadTime(sceneName, duration)
 Analytics.MemoryUsage(totalMB, heapMB)
 ```
 
