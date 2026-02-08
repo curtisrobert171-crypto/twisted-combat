@@ -40,6 +40,24 @@ namespace EmpireOfGlass.Data
         public int VIPLevel;
         public long VIPExpiryTimestamp;
 
+        // Gacha (Var 27)
+        public int GachaPity; // pity counter for guaranteed rare pull
+
+        // Social Proof (Var 29)
+        public int TotalRarePulls;
+
+        // Endowment Effect (Var 32)
+        public string TrialHeroID;
+        public long TrialHeroExpiryTimestamp;
+
+        // Reciprocity (Var 33)
+        public long LastDailyGiftTimestamp;
+        public int DailyGiftStreak;
+
+        // Shield Mechanics (Var 34)
+        public long ShieldExpiryTimestamp;
+        public long LastShieldRechargeTimestamp;
+
         // Base Layout (grid-based defense layout for raids — Var 22)
         public int[][] BaseLayout;
 
@@ -74,6 +92,14 @@ namespace EmpireOfGlass.Data
                 BattlePassPremium = false,
                 VIPLevel = 0,
                 VIPExpiryTimestamp = 0,
+                GachaPity = 0,
+                TotalRarePulls = 0,
+                TrialHeroID = "",
+                TrialHeroExpiryTimestamp = 0,
+                LastDailyGiftTimestamp = 0,
+                DailyGiftStreak = 0,
+                ShieldExpiryTimestamp = 0,
+                LastShieldRechargeTimestamp = 0,
                 BaseLayout = CreateEmptyBaseLayout(10, 10),
                 Inventory = new List<InventoryItem>(),
                 LastOfflineTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
