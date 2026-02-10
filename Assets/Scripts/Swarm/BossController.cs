@@ -16,6 +16,7 @@ namespace EmpireOfGlass.Swarm
         [SerializeField] private float shatterScale = 2f;
 
         private int currentHP;
+        private float encounterStartTime;
 
         public int CurrentHP => currentHP;
         public int MaxHP => maxHP;
@@ -27,6 +28,18 @@ namespace EmpireOfGlass.Swarm
         private void Awake()
         {
             currentHP = maxHP;
+        }
+
+        private void Start()
+        {
+            encounterStartTime = Time.time;
+            
+            // Track boss encounter for analytics
+            var swarm = FindAnyObjectByType<SwarmController>();
+            if (swarm != null && Analytics.AnalyticsManager.Instance != null)
+            {
+                Analytics.AnalyticsManager.Instance.TrackBossEncounter(maxHP, swarm.ShardlingCount);
+            }
         }
 
         /// <summary>
@@ -44,6 +57,14 @@ namespace EmpireOfGlass.Swarm
             {
                 OnBossDefeated?.Invoke();
                 PlayShatterVFX();
+                
+                // Track boss defeat for analytics
+                var swarm = FindAnyObjectByType<SwarmController>();
+                if (swarm != null && Analytics.AnalyticsManager.Instance != null)
+                {
+                    float timeElapsed = Time.time - encounterStartTime;
+                    Analytics.AnalyticsManager.Instance.TrackBossDefeated(swarm.ShardlingCount, timeElapsed);
+                }
             }
 
             // Return number of shardlings lost (equal to boss HP absorbed)
