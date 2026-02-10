@@ -59,6 +59,16 @@ namespace EmpireOfGlass.Core
             currentState = newState;
 
             Debug.Log($"[GameManager] State transition: {previousState} → {newState}");
+            
+            // Track analytics
+            if (Analytics.AnalyticsManager.Instance != null)
+            {
+                Analytics.AnalyticsManager.Instance.TrackStateTransition(
+                    previousState.ToString(), 
+                    newState.ToString()
+                );
+            }
+            
             OnStateChanged?.Invoke(previousState, newState);
         }
 

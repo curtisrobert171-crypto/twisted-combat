@@ -16,13 +16,13 @@ namespace EmpireOfGlass.Core
         [SerializeField] private GameObject hapticManagerPrefab;
 
         [Header("New System Prefabs")]
-        [SerializeField] private GameObject socialManagerPrefab;
-        [SerializeField] private GameObject liveOpsManagerPrefab;
-        [SerializeField] private GameObject gachaManagerPrefab;
-        [SerializeField] private GameObject antiCheatManagerPrefab;
-        [SerializeField] private GameObject adMediationManagerPrefab;
-        [SerializeField] private GameObject viralManagerPrefab;
         [SerializeField] private GameObject analyticsManagerPrefab;
+        [SerializeField] private GameObject notificationManagerPrefab;
+        [SerializeField] private GameObject cloudSaveServicePrefab;
+        [SerializeField] private GameObject antiCheatValidatorPrefab;
+        [SerializeField] private GameObject allianceManagerPrefab;
+        [SerializeField] private GameObject liveOpsManagerPrefab;
+        [SerializeField] private GameObject ftueControllerPrefab;
 
         private void Awake()
         {
@@ -31,7 +31,7 @@ namespace EmpireOfGlass.Core
 
         private void InitializeSystems()
         {
-            // Ensure singletons are created
+            // Core singletons
             if (GameManager.Instance == null && gameManagerPrefab != null)
                 Instantiate(gameManagerPrefab);
 
@@ -47,27 +47,27 @@ namespace EmpireOfGlass.Core
             if (HapticManager.Instance == null && hapticManagerPrefab != null)
                 Instantiate(hapticManagerPrefab);
 
-            // New systems (Vars 18–19, 21, 27, 41, 42, 43, 48)
-            if (Social.SocialManager.Instance == null && socialManagerPrefab != null)
-                Instantiate(socialManagerPrefab);
+            // New system singletons
+            if (AnalyticsManager.Instance == null && analyticsManagerPrefab != null)
+                Instantiate(analyticsManagerPrefab);
 
-            if (LiveOps.LiveOpsManager.Instance == null && liveOpsManagerPrefab != null)
+            if (NotificationManager.Instance == null && notificationManagerPrefab != null)
+                Instantiate(notificationManagerPrefab);
+
+            if (Data.CloudSaveService.Instance == null && cloudSaveServicePrefab != null)
+                Instantiate(cloudSaveServicePrefab);
+
+            if (Data.AntiCheatValidator.Instance == null && antiCheatValidatorPrefab != null)
+                Instantiate(antiCheatValidatorPrefab);
+
+            if (AllianceManager.Instance == null && allianceManagerPrefab != null)
+                Instantiate(allianceManagerPrefab);
+
+            if (Monetization.LiveOpsManager.Instance == null && liveOpsManagerPrefab != null)
                 Instantiate(liveOpsManagerPrefab);
 
-            if (Gacha.GachaManager.Instance == null && gachaManagerPrefab != null)
-                Instantiate(gachaManagerPrefab);
-
-            if (AntiCheat.AntiCheatManager.Instance == null && antiCheatManagerPrefab != null)
-                Instantiate(antiCheatManagerPrefab);
-
-            if (Ads.AdMediationManager.Instance == null && adMediationManagerPrefab != null)
-                Instantiate(adMediationManagerPrefab);
-
-            if (Viral.ViralManager.Instance == null && viralManagerPrefab != null)
-                Instantiate(viralManagerPrefab);
-
-            if (Analytics.AnalyticsManager.Instance == null && analyticsManagerPrefab != null)
-                Instantiate(analyticsManagerPrefab);
+            if (FTUEController.Instance == null && ftueControllerPrefab != null)
+                Instantiate(ftueControllerPrefab);
 
             // Load player data
             var save = Data.SaveManager.Instance;
@@ -80,6 +80,15 @@ namespace EmpireOfGlass.Core
                 if (offlineGold > 0)
                 {
                     Debug.Log($"[Bootstrap] Welcome back! Earned {offlineGold:F0} gold while away.");
+                }
+
+                // Track session start (Var 48)
+                AnalyticsManager.Instance?.TrackSessionStart(playerData.UserID, playerData.Level);
+
+                // Check FTUE (Var 12) — only invoke for new players
+                if (FTUEController.Instance != null && FTUEController.Instance.ShouldStartFTUE())
+                {
+                    FTUEController.Instance.StartFTUE();
                 }
             }
 

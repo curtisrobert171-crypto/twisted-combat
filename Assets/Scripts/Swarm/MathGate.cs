@@ -61,7 +61,20 @@ namespace EmpireOfGlass.Swarm
                 activated = true;
                 if (cachedSwarm != null)
                 {
+                    int beforeCount = cachedSwarm.ShardlingCount;
                     cachedSwarm.ApplyMathGate(operation, value);
+                    int afterCount = cachedSwarm.ShardlingCount;
+                    
+                    // Track analytics event
+                    if (Analytics.AnalyticsManager.Instance != null)
+                    {
+                        Analytics.AnalyticsManager.Instance.TrackMathGateHit(
+                            displayText, 
+                            value, 
+                            beforeCount, 
+                            afterCount
+                        );
+                    }
                 }
                 PlayRefractionVFX();
             }

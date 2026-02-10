@@ -1,26 +1,39 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Collections.Generic;
 
 namespace EmpireOfGlass.Analytics
 {
     /// <summary>
-    /// Manages analytics and attribution tracking: Amplitude, Crashlytics, AdMob, AppsFlyer (Var 48).
-    /// Tracks player behavior, session metrics, and monetization events for retention optimization.
+    /// Central analytics manager for tracking player behavior and game metrics.
+    /// Implements telemetry for playtest feedback and optimization.
     /// </summary>
     public class AnalyticsManager : MonoBehaviour
     {
         public static AnalyticsManager Instance { get; private set; }
 
-        [Header("Analytics Settings (Var 48)")]
+        [Header("Settings")]
         [SerializeField] private bool enableAnalytics = true;
-        [SerializeField] private float sessionPingIntervalSeconds = 60f;
+        [SerializeField] private bool debugMode = false;
+        [SerializeField] private float batchInterval = 10f;
 
+        private readonly Queue<AnalyticsEvent> eventQueue = new Queue<AnalyticsEvent>();
+        private string sessionId;
         private float sessionStartTime;
-        private float lastPingTime;
-        private int eventsTrackedThisSession;
+        private float nextBatchTime;
 
-        public float SessionDuration => Time.time - sessionStartTime;
-        public int EventsTracked => eventsTrackedThisSession;
+        // Metric counters
+        private int mathGatesHit;
+        private int bossesDefeated;
+        private int deathCount;
+        private int loopsCompleted;
+
+        public string SessionId => sessionId;
+        public float SessionDuration => Time.realtimeSinceStartup - sessionStartTime;
+        public int MathGatesHit => mathGatesHit;
+        public int BossesDefeated => bossesDefeated;
+        public int DeathCount => deathCount;
+        public int LoopsCompleted => loopsCompleted;
 
         private void Awake()
         {
@@ -35,125 +48,220 @@ namespace EmpireOfGlass.Analytics
 
         private void Start()
         {
-            sessionStartTime = Time.time;
-            lastPingTime = Time.time;
-            TrackEvent("session_start", null);
-            Debug.Log("[AnalyticsManager] Analytics initialized (Amplitude, Crashlytics, AppsFlyer)");
+            sessionId = Guid.NewGuid().ToString();
+            sessionStartTime = Time.realtimeSinceStartup;
+            nextBatchTime = Time.realtimeSinceStartup + batchInterval;
+
+            TrackSessionStart();
         }
 
         private void Update()
         {
-            if (!enableAnalytics) return;
-
-            if (Time.time - lastPingTime >= sessionPingIntervalSeconds)
+            if (Time.realtimeSinceStartup >= nextBatchTime)
             {
-                lastPingTime = Time.time;
-                TrackEvent("session_ping", new Dictionary<string, string>
-                {
-                    { "duration", SessionDuration.ToString("F0") }
-                });
+                BatchSendEvents();
+                nextBatchTime = Time.realtimeSinceStartup + batchInterval;
             }
         }
 
-        private void OnApplicationPause(bool paused)
+        private void OnApplicationQuit()
         {
-            if (paused)
-            {
-                TrackEvent("session_background", new Dictionary<string, string>
-                {
-                    { "duration", SessionDuration.ToString("F0") }
-                });
-            }
-            else
-            {
-                TrackEvent("session_resume", null);
-            }
+            TrackSessionEnd("normal_exit");
         }
 
-        /// <summary>
-        /// Track a custom analytics event with optional properties.
-        /// In production, this sends to Amplitude and other analytics services.
-        /// </summary>
-        public void TrackEvent(string eventName, Dictionary<string, string> properties)
+        private void OnApplicationPause(bool pauseStatus)
         {
-            if (!enableAnalytics) return;
-
-            eventsTrackedThisSession++;
-
-            // Placeholder: in production, send to Amplitude SDK
-            if (properties != null && properties.Count > 0)
+            if (pauseStatus)
             {
-                Debug.Log($"[AnalyticsManager] Event: {eventName} | Properties: {properties.Count}");
-            }
-            else
-            {
-                Debug.Log($"[AnalyticsManager] Event: {eventName}");
+                TrackSessionEnd("app_pause");
             }
         }
 
-        /// <summary>
-        /// Track a game state transition for session pacing analysis.
-        /// </summary>
+        // Session Events
+        public void TrackSessionStart()
+        {
+            TrackEvent("session_start", new Dictionary<string, object>
+            {
+                { "session_id", sessionId },
+                { "timestamp", DateTime.UtcNow.ToString("o") },
+                { "device_model", SystemInfo.deviceModel },
+                { "os", SystemInfo.operatingSystem },
+                { "memory_mb", SystemInfo.systemMemorySize },
+                { "graphics_memory_mb", SystemInfo.graphicsMemorySize }
+            });
+        }
+
+        public void TrackSessionEnd(string reason)
+        {
+            TrackEvent("session_end", new Dictionary<string, object>
+            {
+                { "session_id", sessionId },
+                { "duration", SessionDuration },
+                { "reason", reason },
+                { "loops_completed", loopsCompleted },
+                { "gates_hit", mathGatesHit },
+                { "deaths", deathCount }
+            });
+            BatchSendEvents();
+        }
+
+        // State Transition Events
         public void TrackStateTransition(string fromState, string toState)
         {
-            TrackEvent("state_transition", new Dictionary<string, string>
+            TrackEvent("state_transition", new Dictionary<string, object>
             {
                 { "from", fromState },
-                { "to", toState }
+                { "to", toState },
+                { "timestamp", Time.realtimeSinceStartup }
             });
         }
 
-        /// <summary>
-        /// Track a monetization event for revenue analytics.
-        /// </summary>
-        public void TrackPurchase(string productId, float price, string currency)
+        // Swarm Events
+        public void TrackSwarmStart(int initialCount)
         {
-            TrackEvent("purchase", new Dictionary<string, string>
+            TrackEvent("swarm_start", new Dictionary<string, object>
             {
-                { "product_id", productId },
-                { "price", price.ToString("F2") },
-                { "currency", currency }
+                { "initial_count", initialCount },
+                { "timestamp", Time.realtimeSinceStartup }
             });
         }
 
-        /// <summary>
-        /// Track swarm run metrics for gameplay tuning.
-        /// </summary>
-        public void TrackSwarmRun(int finalCount, int gatesHit, bool bossDefeated)
+        public void TrackMathGateHit(string gateType, int multiplier, int beforeCount, int afterCount)
         {
-            TrackEvent("swarm_run", new Dictionary<string, string>
+            mathGatesHit++;
+            TrackEvent("math_gate_hit", new Dictionary<string, object>
             {
-                { "final_count", finalCount.ToString() },
-                { "gates_hit", gatesHit.ToString() },
-                { "boss_defeated", bossDefeated.ToString() }
+                { "gate_type", gateType },
+                { "multiplier", multiplier },
+                { "before_count", beforeCount },
+                { "after_count", afterCount },
+                { "delta", afterCount - beforeCount }
             });
         }
 
-        /// <summary>
-        /// Track raid completion for balancing and engagement.
-        /// </summary>
-        public void TrackRaidComplete(int lootTier, int goldEarned, bool wasRevenge)
+        public void TrackBossEncounter(int bossHP, int swarmCount)
         {
-            TrackEvent("raid_complete", new Dictionary<string, string>
+            TrackEvent("boss_encounter", new Dictionary<string, object>
             {
-                { "loot_tier", lootTier.ToString() },
-                { "gold", goldEarned.ToString() },
-                { "revenge", wasRevenge.ToString() }
+                { "boss_hp", bossHP },
+                { "swarm_count", swarmCount },
+                { "timestamp", Time.realtimeSinceStartup }
             });
         }
 
-        /// <summary>
-        /// Record attribution data from AppsFlyer for user acquisition tracking.
-        /// </summary>
-        public void RecordAttribution(string source, string campaign, string adGroup)
+        public void TrackBossDefeated(int finalSwarmCount, float timeElapsed)
         {
-            TrackEvent("attribution", new Dictionary<string, string>
+            bossesDefeated++;
+            TrackEvent("boss_defeated", new Dictionary<string, object>
             {
-                { "source", source },
-                { "campaign", campaign },
-                { "ad_group", adGroup }
+                { "final_swarm_count", finalSwarmCount },
+                { "time_elapsed", timeElapsed },
+                { "total_bosses_defeated", bossesDefeated }
             });
-            Debug.Log($"[AnalyticsManager] Attribution: {source}/{campaign}/{adGroup}");
         }
+
+        public void TrackSwarmFailed(string reason, int swarmCount, float progressPercent)
+        {
+            deathCount++;
+            TrackEvent("swarm_failed", new Dictionary<string, object>
+            {
+                { "reason", reason },
+                { "swarm_count", swarmCount },
+                { "progress_percent", progressPercent },
+                { "death_count", deathCount }
+            });
+        }
+
+        // Loop Completion
+        public void TrackLoopCompleted(float duration)
+        {
+            loopsCompleted++;
+            TrackEvent("loop_completed", new Dictionary<string, object>
+            {
+                { "duration", duration },
+                { "loop_number", loopsCompleted }
+            });
+        }
+
+        // Performance Events
+        public void TrackFrameRateSnapshot(float avgFPS, float minFPS, int swarmCount)
+        {
+            TrackEvent("framerate_snapshot", new Dictionary<string, object>
+            {
+                { "avg_fps", avgFPS },
+                { "min_fps", minFPS },
+                { "swarm_count", swarmCount },
+                { "timestamp", Time.realtimeSinceStartup }
+            });
+        }
+
+        public void TrackLoadTime(string sceneName, float duration)
+        {
+            TrackEvent("load_time", new Dictionary<string, object>
+            {
+                { "scene", sceneName },
+                { "duration", duration }
+            });
+        }
+
+        // Generic Event Tracking
+        private void TrackEvent(string eventName, Dictionary<string, object> parameters)
+        {
+            if (!enableAnalytics) return;
+
+            var evt = new AnalyticsEvent
+            {
+                name = eventName,
+                timestamp = Time.realtimeSinceStartup,
+                parameters = parameters
+            };
+
+            eventQueue.Enqueue(evt);
+
+            if (debugMode)
+            {
+                Debug.Log($"[Analytics] {eventName}: {string.Join(", ", parameters)}");
+            }
+        }
+
+        private void BatchSendEvents()
+        {
+            if (eventQueue.Count == 0) return;
+
+            if (debugMode)
+            {
+                Debug.Log($"[Analytics] Batching {eventQueue.Count} events");
+            }
+
+            // In production, send to analytics service
+            // For now, just log locally
+            while (eventQueue.Count > 0)
+            {
+                var evt = eventQueue.Dequeue();
+                // TODO: Send to backend analytics service
+            }
+        }
+
+        // Public API for querying metrics
+        public Dictionary<string, object> GetSessionSummary()
+        {
+            return new Dictionary<string, object>
+            {
+                { "session_id", sessionId },
+                { "duration", SessionDuration },
+                { "loops_completed", loopsCompleted },
+                { "math_gates_hit", mathGatesHit },
+                { "bosses_defeated", bossesDefeated },
+                { "deaths", deathCount }
+            };
+        }
+    }
+
+    [Serializable]
+    public class AnalyticsEvent
+    {
+        public string name;
+        public float timestamp;
+        public Dictionary<string, object> parameters;
     }
 }
