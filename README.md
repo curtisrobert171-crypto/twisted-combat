@@ -169,3 +169,9 @@ Produce the **Technical Game Design Document** and include:
 
 **SYSTEM ARCHITECTURE NOTE:**
 Explain how the UE5 client communicates with the backend (PlayFab/Azure) to validate raid results and prevent cheating.
+
+---
+
+## Developer Resources
+
+- **[Hardware Requirements](HARDWARE_REQUIREMENTS.md)** — Recommended workstation specs for Unity 6, Unreal Engine 5, and DevOps/CI development.
