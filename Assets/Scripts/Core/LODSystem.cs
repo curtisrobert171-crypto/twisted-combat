@@ -111,9 +111,9 @@ namespace EmpireOfGlass.Core
 
             foreach (var lodObject in lodObjects)
             {
-                if (lodObject == null || lodObject.Transform == null) continue;
+                if (lodObject == null || lodObject.ObjectTransform == null) continue;
 
-                float distance = Vector3.Distance(cameraPos, lodObject.Transform.position);
+                float distance = Vector3.Distance(cameraPos, lodObject.ObjectTransform.position);
                 LODLevel level = CalculateLODLevel(distance);
 
                 // Apply global LOD override if lower quality needed
@@ -236,7 +236,7 @@ namespace EmpireOfGlass.Core
     /// </summary>
     public interface ILODObject
     {
-        Transform Transform { get; }
+        Transform ObjectTransform { get; }
         void SetLODLevel(LODSystem.LODLevel level);
     }
 
@@ -256,7 +256,7 @@ namespace EmpireOfGlass.Core
 
         private LODSystem.LODLevel currentLOD = LODSystem.LODLevel.High;
 
-        public Transform Transform => transform;
+        public Transform ObjectTransform => transform;
 
         private void OnEnable()
         {

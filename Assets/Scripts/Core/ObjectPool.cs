@@ -54,6 +54,7 @@ namespace EmpireOfGlass.Core
             {
                 Queue<GameObject> objectPool = new Queue<GameObject>();
                 prefabDictionary[pool.Tag] = pool.Prefab;
+                poolDictionary[pool.Tag] = objectPool;
 
                 for (int i = 0; i < pool.Size; i++)
                 {
@@ -61,7 +62,6 @@ namespace EmpireOfGlass.Core
                     objectPool.Enqueue(obj);
                 }
 
-                poolDictionary[pool.Tag] = objectPool;
                 spawnCounts[pool.Tag] = 0;
 
                 Debug.Log($"[ObjectPool] Initialized pool '{pool.Tag}' with {pool.Size} objects");
