@@ -64,6 +64,9 @@ namespace EmpireOfGlass.Data
         // Inventory (hero shards, items, skins)
         public List<InventoryItem> Inventory;
 
+        // FTUE (Var 12)
+        public bool FTUECompleted;
+
         // Offline Progression (Var 20)
         public long LastOfflineTimestamp;
         public float OfflineAccumulatedGold;
@@ -100,6 +103,7 @@ namespace EmpireOfGlass.Data
                 DailyGiftStreak = 0,
                 ShieldExpiryTimestamp = 0,
                 LastShieldRechargeTimestamp = 0,
+                FTUECompleted = false,
                 BaseLayout = CreateEmptyBaseLayout(10, 10),
                 Inventory = new List<InventoryItem>(),
                 LastOfflineTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
