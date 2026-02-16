@@ -1,0 +1,62 @@
+[
+  {
+    "id": "furniture_v1",
+    "displayName": "Furniture",
+    "categoryKey": "furniture",
+    "inputSchema": {
+      "fields": [
+        {"key": "brand", "type": "text", "required": false},
+        {"key": "material", "type": "text", "required": false},
+        {"key": "condition", "type": "select", "required": true, "options": ["new", "like new", "good", "fair"]}
+      ]
+    }
+  },
+  {
+    "id": "electronics_v1",
+    "displayName": "Electronics",
+    "categoryKey": "electronics",
+    "inputSchema": {
+      "fields": [
+        {"key": "brand", "type": "text", "required": true},
+        {"key": "model", "type": "text", "required": true},
+        {"key": "condition", "type": "select", "required": true, "options": ["new", "like new", "good", "fair"]}
+      ]
+    }
+  },
+  {
+    "id": "appliances_v1",
+    "displayName": "Appliances",
+    "categoryKey": "appliances",
+    "inputSchema": {
+      "fields": [
+        {"key": "brand", "type": "text", "required": false},
+        {"key": "energyRating", "type": "text", "required": false},
+        {"key": "condition", "type": "select", "required": true, "options": ["new", "like new", "good", "fair"]}
+      ]
+    }
+  },
+  {
+    "id": "tools_v1",
+    "displayName": "Tools",
+    "categoryKey": "tools",
+    "inputSchema": {
+      "fields": [
+        {"key": "brand", "type": "text", "required": false},
+        {"key": "powerType", "type": "select", "required": false, "options": ["corded", "battery", "manual"]},
+        {"key": "condition", "type": "select", "required": true, "options": ["new", "like new", "good", "fair"]}
+      ]
+    }
+  },
+  {
+    "id": "baby_kids_v1",
+    "displayName": "Baby & Kids",
+    "categoryKey": "babyKids",
+    "inputSchema": {
+      "fields": [
+        {"key": "ageRange", "type": "text", "required": true},
+        {"key": "brand", "type": "text", "required": false},
+        {"key": "condition", "type": "select", "required": true, "options": ["new", "like new", "good", "fair"]}
+      ]
+    }
+  }
+]
