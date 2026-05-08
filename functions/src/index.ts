@@ -32,10 +32,11 @@ export const exchangeGitHubToken = onCall(async (request) => {
     );
   }
 
-  const {code, redirectUri} = request.data as {
-    code?: string;
-    redirectUri?: string;
-  };
+  const data = request.data as unknown;
+  if (!data || typeof data !== 'object') {
+    throw new HttpsError('invalid-argument', 'Request data must be an object.');
+  }
+  const {code, redirectUri} = data as Record<string, unknown>;
 
   if (!code || typeof code !== 'string') {
     throw new HttpsError('invalid-argument', 'Missing or invalid OAuth code.');
@@ -71,18 +72,33 @@ export const exchangeGitHubToken = onCall(async (request) => {
     );
   }
 
-  const body = (await response.json()) as {
-    access_token?: string;
-    error?: string;
-    error_description?: string;
-  };
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new HttpsError('internal', 'Failed to parse GitHub OAuth response.');
+  }
 
-  if (body.error || !body.access_token) {
+  if (!body || typeof body !== 'object') {
+    throw new HttpsError('internal', 'Unexpected GitHub OAuth response format.');
+  }
+
+  const {access_token, error, error_description} = body as Record<string, unknown>;
+
+  if (error || !access_token) {
     throw new HttpsError(
       'unauthenticated',
-      body.error_description ?? body.error ?? 'GitHub token exchange failed.'
+      typeof error_description === 'string'
+        ? error_description
+        : typeof error === 'string'
+          ? error
+          : 'GitHub token exchange failed.'
     );
   }
 
-  return {accessToken: body.access_token};
+  if (typeof access_token !== 'string') {
+    throw new HttpsError('internal', 'GitHub OAuth returned an invalid access token.');
+  }
+
+  return {accessToken: access_token};
 });
