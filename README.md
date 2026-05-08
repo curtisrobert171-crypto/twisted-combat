@@ -78,6 +78,10 @@ Template starter data for 5 categories is available at:
 
 Functions are scaffolded with `AI_STUB_MODE=true` default behavior via env fallback. Full image/text job processing and credit enforcement are implemented in upcoming steps.
 
+## Local Stable Diffusion Setup
+
+If you want to run Stable Diffusion on your own machine for local image experimentation, see [Documentation/LocalStableDiffusion.md](./Documentation/LocalStableDiffusion.md).
+
 ## Next Planned Steps
 
 1. Firebase Auth + Firestore/Storage wiring.
