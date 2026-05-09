@@ -1,0 +1,29 @@
+{
+  "name": "empire-of-glass-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server exposing Empire of Glass game-dev tools to AI assistants",
+  "private": true,
+  "type": "commonjs",
+  "main": "lib/index.js",
+  "bin": {
+    "empire-of-glass-mcp": "lib/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=lib/index.js --external:@google-cloud/firestore",
+    "start": "node lib/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^8.5.0",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "esbuild": "^0.28.0",
+    "typescript": "^5.5.4"
+  }
+}

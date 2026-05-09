@@ -67,6 +67,7 @@ export const devResetPlayer = onCall(async (request) => {
       mathGatesHit: 0,
       totalPlaytime: 0,
       deaths: 0,
+      raidsWon: 0,
     },
     baseLayout: [],
     inventory: [],
