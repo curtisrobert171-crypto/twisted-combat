@@ -53,3 +53,9 @@ crashlytics-build.properties
 
 # Code coverage
 [Cc]ode[Cc]overage/
+
+# Node.js — functions & MCP packages
+functions/node_modules/
+functions/lib/
+mcp/node_modules/
+mcp/lib/

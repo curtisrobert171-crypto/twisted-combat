@@ -3,14 +3,44 @@ import {HttpsError, onCall} from 'firebase-functions/v2/https';
 
 admin.initializeApp();
 
+// ── Health ────────────────────────────────────────────────────────────────────
+
 export const healthCheck = onCall(async () => {
   return {
-    service: 'AI Marketplace Seller Studio Functions',
+    service: 'Empire of Glass — Game Backend Functions',
     mode: process.env.AI_STUB_MODE ?? 'true',
     status: 'ok',
   };
 });
 
+// ── Authentication ────────────────────────────────────────────────────────────
+
+export {deviceLogin, setDisplayName} from './auth';
+
+// ── Player data (cloud save / load) ──────────────────────────────────────────
+
+export {savePlayerData, loadPlayerData} from './player';
+
+// ── Leaderboards ──────────────────────────────────────────────────────────────
+
+export {submitScore, getLeaderboard} from './leaderboard';
+
+// ── PvP Matchmaking ───────────────────────────────────────────────────────────
+
+export {findRaidTarget} from './matchmaking';
+
+// ── Raid results ──────────────────────────────────────────────────────────────
+
+export {completeRaid} from './raid';
+
+// ── Developer tools (admin-only) ─────────────────────────────────────────────
+
+export {
+  devResetPlayer,
+  devGrantCurrency,
+  devSeedLeaderboard,
+  devGetMetrics,
+} from './devtools';
 /**
  * Exchanges a GitHub OAuth authorization code for an access token.
  *
@@ -99,6 +129,5 @@ export const exchangeGitHubToken = onCall(async (request) => {
   if (typeof access_token !== 'string') {
     throw new HttpsError('internal', 'GitHub OAuth returned an invalid access token.');
   }
-
   return {accessToken: access_token};
 });
