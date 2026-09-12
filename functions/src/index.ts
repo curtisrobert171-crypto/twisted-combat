@@ -211,14 +211,17 @@ export const exchangeFacebookToken = onCall(
       throw new HttpsError('internal', 'Unexpected Facebook OAuth response format.');
     }
 
-    const {access_token, error} = body as Record<string, unknown>;
+    const {access_token, error, error_message, error_code} = body as Record<string, unknown>;
     const errorObject = error && typeof error === 'object' ? (error as Record<string, unknown>) : null;
+    const hasTopLevelError = Boolean(error_message) || typeof error_code !== 'undefined';
     const upstreamErrorMessage =
       errorObject && typeof errorObject.message === 'string'
         ? errorObject.message
+        : typeof error_message === 'string'
+          ? error_message
         : null;
 
-    if (!response.ok || errorObject || typeof access_token !== 'string') {
+    if (!response.ok || errorObject || hasTopLevelError || typeof access_token !== 'string') {
       if (upstreamErrorMessage) {
         console.warn('Facebook token exchange failed:', upstreamErrorMessage);
       }
