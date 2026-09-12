@@ -223,12 +223,10 @@ export const exchangeFacebookToken = onCall(
         console.warn('Facebook token exchange failed:', upstreamErrorMessage);
       }
       throw new HttpsError(
-        response.status >= 400 && response.status < 500
-          ? 'invalid-argument'
-          : 'internal',
-        response.status >= 400 && response.status < 500
-          ? 'Facebook token exchange request was rejected.'
-          : 'Facebook token exchange failed.'
+        response.status >= 500 ? 'internal' : 'failed-precondition',
+        response.status >= 500
+          ? 'Facebook token exchange failed.'
+          : 'Facebook OAuth is not correctly configured or rejected this request.'
       );
     }
 
