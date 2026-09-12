@@ -213,13 +213,15 @@ export const exchangeFacebookToken = onCall(
 
     const {access_token, error, error_message, error_code} = body as Record<string, unknown>;
     const errorObject = error && typeof error === 'object' ? (error as Record<string, unknown>) : null;
-    const hasTopLevelError = Boolean(error_message) || typeof error_code !== 'undefined';
+    const errorString = typeof error === 'string' ? error : null;
+    const hasTopLevelError =
+      Boolean(errorString) || Boolean(error_message) || typeof error_code !== 'undefined';
     const upstreamErrorMessage =
       errorObject && typeof errorObject.message === 'string'
         ? errorObject.message
         : typeof error_message === 'string'
           ? error_message
-        : null;
+          : errorString;
 
     if (!response.ok || errorObject || hasTopLevelError || typeof access_token !== 'string') {
       if (upstreamErrorMessage) {
