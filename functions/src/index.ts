@@ -225,11 +225,25 @@ export const exchangeFacebookToken = onCall(
       if (upstreamErrorMessage) {
         console.warn('Facebook token exchange failed:', upstreamErrorMessage);
       }
+      const normalizedUpstreamMessage = (upstreamErrorMessage ?? '').toLowerCase();
+      const isConfigError =
+        normalizedUpstreamMessage.includes('app secret') ||
+        normalizedUpstreamMessage.includes('app id') ||
+        normalizedUpstreamMessage.includes('client_secret') ||
+        normalizedUpstreamMessage.includes('client id');
+      const isClientInputError = response.status >= 400 && response.status < 500 && !isConfigError;
+
       throw new HttpsError(
-        response.status >= 500 ? 'internal' : 'failed-precondition',
+        response.status >= 500
+          ? 'internal'
+          : isClientInputError
+            ? 'invalid-argument'
+            : 'failed-precondition',
         response.status >= 500
           ? 'Facebook token exchange failed.'
-          : 'Facebook OAuth is not correctly configured or rejected this request.'
+          : isClientInputError
+            ? 'Facebook token exchange request was rejected.'
+            : 'Facebook OAuth is not correctly configured.'
       );
     }
 
