@@ -1,7 +1,11 @@
 import * as admin from 'firebase-admin';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
+import {defineSecret} from 'firebase-functions/params';
 
 admin.initializeApp();
+
+const facebookAppId = defineSecret('FACEBOOK_APP_ID');
+const facebookAppSecret = defineSecret('FACEBOOK_APP_SECRET');
 
 // ── Health ────────────────────────────────────────────────────────────────────
 
@@ -131,3 +135,120 @@ export const exchangeGitHubToken = onCall(async (request) => {
   }
   return {accessToken: access_token};
 });
+
+/**
+ * Exchanges a Facebook OAuth authorization code for an access token.
+ *
+ * The Facebook App ID and App Secret are read from Firebase Functions secrets
+ * and are never returned to the client.
+ *
+ * Expected request data: { code: string, redirectUri: string }
+ * Response: { accessToken: string }
+ */
+export const exchangeFacebookToken = onCall(
+  {secrets: [facebookAppId, facebookAppSecret]},
+  async (request) => {
+    const appId = facebookAppId.value();
+    const appSecret = facebookAppSecret.value();
+
+    if (!appId || !appSecret) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Facebook OAuth is not configured on this server.'
+      );
+    }
+
+    const data = request.data as unknown;
+    if (!data || typeof data !== 'object') {
+      throw new HttpsError('invalid-argument', 'Request data must be an object.');
+    }
+
+    const {code, redirectUri} = data as Record<string, unknown>;
+    if (!code || typeof code !== 'string') {
+      throw new HttpsError('invalid-argument', 'Missing or invalid OAuth code.');
+    }
+    if (!redirectUri || typeof redirectUri !== 'string') {
+      throw new HttpsError('invalid-argument', 'Missing or invalid redirectUri.');
+    }
+
+    const params = new URLSearchParams({
+      client_id: appId,
+      client_secret: appSecret,
+      code,
+      redirect_uri: redirectUri,
+    });
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://graph.facebook.com/v19.0/oauth/access_token?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {Accept: 'application/json'},
+        }
+      );
+    } catch {
+      throw new HttpsError('unavailable', 'Failed to reach Facebook OAuth endpoint.');
+    }
+
+    let body: unknown;
+    try {
+      const responseText = await response.text();
+      const contentType = response.headers.get('content-type') ?? '';
+
+      if (contentType.includes('application/json')) {
+        body = JSON.parse(responseText) as unknown;
+      } else {
+        const formBody = new URLSearchParams(responseText);
+        const parsedBody = Object.fromEntries(formBody.entries());
+        body = Object.keys(parsedBody).length > 0 ? parsedBody : null;
+      }
+    } catch {
+      throw new HttpsError('internal', 'Failed to parse Facebook OAuth response.');
+    }
+
+    if (!body || typeof body !== 'object') {
+      throw new HttpsError('internal', 'Unexpected Facebook OAuth response format.');
+    }
+
+    const {access_token, error, error_message, error_code} = body as Record<string, unknown>;
+    const errorObject = error && typeof error === 'object' ? (error as Record<string, unknown>) : null;
+    const errorString = typeof error === 'string' ? error : null;
+    const hasTopLevelError =
+      Boolean(errorString) || Boolean(error_message) || typeof error_code !== 'undefined';
+    const upstreamErrorMessage =
+      errorObject && typeof errorObject.message === 'string'
+        ? errorObject.message
+        : typeof error_message === 'string'
+          ? error_message
+          : errorString;
+
+    if (!response.ok || errorObject || hasTopLevelError || typeof access_token !== 'string') {
+      if (upstreamErrorMessage) {
+        console.warn('Facebook token exchange failed:', upstreamErrorMessage);
+      }
+      const normalizedUpstreamMessage = (upstreamErrorMessage ?? '').toLowerCase();
+      const isConfigError =
+        normalizedUpstreamMessage.includes('app secret') ||
+        normalizedUpstreamMessage.includes('app id') ||
+        normalizedUpstreamMessage.includes('client_secret') ||
+        normalizedUpstreamMessage.includes('client id');
+      const isClientInputError = response.status >= 400 && response.status < 500 && !isConfigError;
+
+      throw new HttpsError(
+        response.status >= 500
+          ? 'internal'
+          : isClientInputError
+            ? 'invalid-argument'
+            : 'failed-precondition',
+        response.status >= 500
+          ? 'Facebook token exchange failed.'
+          : isClientInputError
+            ? 'Facebook token exchange request was rejected.'
+            : 'Facebook OAuth is not correctly configured.'
+      );
+    }
+
+    return {accessToken: access_token};
+  }
+);
