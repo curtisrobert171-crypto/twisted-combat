@@ -193,7 +193,16 @@ export const exchangeFacebookToken = onCall(
 
     let body: unknown;
     try {
-      body = await response.json();
+      const responseText = await response.text();
+      const contentType = response.headers.get('content-type') ?? '';
+
+      if (contentType.includes('application/json')) {
+        body = JSON.parse(responseText) as unknown;
+      } else {
+        const formBody = new URLSearchParams(responseText);
+        const parsedBody = Object.fromEntries(formBody.entries());
+        body = Object.keys(parsedBody).length > 0 ? parsedBody : null;
+      }
     } catch {
       throw new HttpsError('internal', 'Failed to parse Facebook OAuth response.');
     }
