@@ -204,17 +204,22 @@ export const exchangeFacebookToken = onCall(
 
     const {access_token, error} = body as Record<string, unknown>;
     const errorObject = error && typeof error === 'object' ? (error as Record<string, unknown>) : null;
-    const errorMessage =
+    const upstreamErrorMessage =
       errorObject && typeof errorObject.message === 'string'
         ? errorObject.message
-        : 'Facebook token exchange failed.';
+        : null;
 
     if (!response.ok || errorObject || typeof access_token !== 'string') {
+      if (upstreamErrorMessage) {
+        console.warn('Facebook token exchange failed:', upstreamErrorMessage);
+      }
       throw new HttpsError(
         response.status >= 400 && response.status < 500
           ? 'invalid-argument'
           : 'internal',
-        errorMessage
+        response.status >= 400 && response.status < 500
+          ? 'Facebook token exchange request was rejected.'
+          : 'Facebook token exchange failed.'
       );
     }
 
