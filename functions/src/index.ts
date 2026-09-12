@@ -211,7 +211,9 @@ export const exchangeFacebookToken = onCall(
 
     if (!response.ok || errorObject || typeof access_token !== 'string') {
       throw new HttpsError(
-        response.status >= 400 && response.status < 500 ? 'unauthenticated' : 'internal',
+        response.status >= 400 && response.status < 500
+          ? 'invalid-argument'
+          : 'internal',
         errorMessage
       );
     }
